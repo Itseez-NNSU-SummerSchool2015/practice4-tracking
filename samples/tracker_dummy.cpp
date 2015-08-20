@@ -49,6 +49,15 @@ bool TrackerIlya::init( const cv::Mat& frame, const cv::Rect& initial_position )
 
 bool TrackerIlya::track( const cv::Mat& frame, cv::Rect& new_position )
 {
+    long x=position_.x;
+    long y=position_.y;
+    long width=position_.width;
+    long height=position_.height;
+	x++;y++;
+    {
+    cv::Rect t(x,y,width,height);
+	position_=t;
+    }
     new_position = position_;
 	return true;
 }
