@@ -51,8 +51,11 @@ int main( int argc, char** argv )
 
     // Open the video file
     cv::VideoCapture cap;
-    cap.open( video_name );
-
+    if(video_name != "camera"){
+        cap.open( video_name );
+    }else{
+        cap.open( 0 );
+    }
     if( !cap.isOpened() )
     {
         std::cout << "Error: could not initialize video capturing...\n";
@@ -62,7 +65,9 @@ int main( int argc, char** argv )
 
     // Get the first frame
     cv::Mat frame;
-    cap >> frame;
+    while(frame.empty()){
+        cap >> frame;
+    }
 
     // Initialize GTReader and PrecisionRecallEvaluator
     std::string argv3 = parser.get<std::string>("3");
