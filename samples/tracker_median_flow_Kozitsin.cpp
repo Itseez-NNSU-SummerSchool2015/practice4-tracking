@@ -11,7 +11,10 @@ using namespace std;
 using namespace cv;
 
 
-void featuresStatus(vector<unsigned char>&, vector<Point2f>&);
+void featuresStatus(vector<unsigned char>&, vector<Point2f>&, vector<Point2f>&, vector<float>&, float);
+float median(vector<float>);
+void ComputeShift(Rect&, const Mat&, const vector<Point2f>&, const vector<Point2f>);
+
 
 class TrackerAwesome: public Tracker
 {
@@ -35,7 +38,8 @@ bool TrackerAwesome::init( const cv::Mat& frame, const cv::Rect& initial_positio
 
 bool TrackerAwesome::track( const cv::Mat& frame, cv::Rect& new_position )
 {
-    
+    new_position = position_;
+
     Mat roi(prev_gray, position_);
     vector<Point2f> features, features_new;
     goodFeaturesToTrack(roi, features, 50, 0.01, 10);
@@ -64,15 +68,54 @@ bool TrackerAwesome::track( const cv::Mat& frame, cv::Rect& new_position )
     
     waitKey();
     */
-    
-    featuresStatus(status, features);
 
-    // Remove points higher than median error
-    float medianError = median();
-    for ()
-    
+    float medianError = median(errors); 
+    featuresStatus(status, features, features_new, errors, medianError);  
 
     // Shift rectangle on axis 
+    ComputeShift(new_position, frame, features, features_new);
+
+    for (int i = 0; i < features_new.size(); i++)
+    {
+        cv::circle(gray, features_new[i], 5, Scalar(0, 0, 255));
+    }
+    imshow("2", gray);
+
+    // TODO: coefficient scale + median shift;
+
+    cv::swap(prev_gray, gray);
+    position_ = new_position;
+
+    return true;
+}
+
+cv::Ptr<Tracker> createTrackerAwesome()
+{
+    return cv::Ptr<Tracker>(new TrackerAwesome());
+}
+
+void featuresStatus(vector<unsigned char>& status, vector<Point2f>& features, vector<Point2f>& features_new, vector<float>& errors, float median)
+{
+    for (int i = status.size() - 1; i >= 0; i--)
+    {
+        if (!status[i])
+        {
+            status.erase(status.begin() + i);
+            features.erase(features.begin() + i);
+
+            errors.erase(errors.begin() + i);
+        }
+    }
+}
+
+float median(vector<float> errors)
+{
+    sort(errors.begin(), errors.end());
+    return errors[errors.size() / 2];
+}
+
+void ComputeShift(Rect& new_position, const Mat& frame, const vector<Point2f>& features, const vector<Point2f> features_new)
+{
     float shiftX, shiftY;
 
     std::vector<float> x(features.size());
@@ -90,56 +133,33 @@ bool TrackerAwesome::track( const cv::Mat& frame, cv::Rect& new_position )
     shiftX = x[x.size() / 2];
     shiftY = y[y.size() / 2];
 
-    new_position.x += shiftX;
-    new_position.y += shiftY;
-
-    for (int i = 0; i < features_new.size(); i++)
+    // X+
+    if (new_position.x + shiftX + new_position.width > frame.cols)
     {
-        cv::circle(gray, features_new[i], 5, Scalar(0, 0, 255));
+        new_position.x = frame.cols - new_position.width;
     }
-    imshow("2", gray);
-    // TODO: coefficient scale + median shift;
-
-    /*
-    for (int i = 0; i < features.size(); i++)
+    // X-
+    else if (new_position.x + shiftX < 0)
     {
-        for (int j = i; j < features.size(); j++)
-        {
-            features[i].x = 
+        new_position.x = 0;
     }
-    */
-    std::swap(features_new, features);
-    cv::swap(prev_gray, gray);
-
-    position_ = new_position;
-    return true;
-}
-
-cv::Ptr<Tracker> createTrackerAwesome()
-{
-    return cv::Ptr<Tracker>(new TrackerAwesome());
-}
-
-void featuresStatus(vector<unsigned char>& status, vector<Point2f>& features, vector<float>& errors)
-{
-    for (int i = status.size() - 1; i >= 0; i--)
+    else
     {
-        if (!status[i])
-        {
-            status.erase(status.begin() + i);
-            features.erase(features.begin() + i);
-            errors.erase(errors.begin() + i);
-        }
+        new_position.x += shiftX;
     }
-}
 
-void sortings(vector<float>& errors, vector<Point2f> features, vector<Point2f> features_new)
-{
-
-}
-
-float median(vector<float> errors)
-{
-    sort(errors.begin(), errors.end());
-    return errors[errors.size() / 2];
+    // Y+
+    if (new_position.y + shiftY + new_position.height > frame.rows)
+    {
+        new_position.y = frame.rows - new_position.height;
+    }
+    // Y-
+    else if (new_position.y + shiftY < 0)
+    {
+        new_position.y = 0;
+    }
+    else
+    {
+        new_position.y += shiftY;
+    }
 }
