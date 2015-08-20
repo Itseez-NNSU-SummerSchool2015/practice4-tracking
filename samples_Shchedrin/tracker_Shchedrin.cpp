@@ -116,11 +116,38 @@ bool TrackerShchedrin::track( const cv::Mat& frame, cv::Rect& new_position )
             }
         }
     }
+    std::vector<double> scalesX,scalesY;
+    double zoomX, zoomY;
+    for(int i = 0; i < points.size(); i++){
+        for(int j = 0; j < points.size(); j++){
+            if(status_final[i] && status_final[j] && i != j){
+                if(err0[i] < errlimit){
+                    double scaleX = cv::norm(new_points[i].x - new_points[j].x)/cv::norm(points[i].x - points[j].x);
+                    double scaleY = cv::norm(new_points[i].y - new_points[j].y)/cv::norm(points[i].y - points[j].y);
+                    scaleX = abs(scaleX);
+                    scaleY = abs(scaleY);
+                    scalesX.push_back(scaleX);
+                    scalesY.push_back(scaleY);
+                }
+            }
+        }
+    }
+    zoomX = CalcMedian(scalesX);
+    zoomY = CalcMedian(scalesY);
+
     if(shift_vecx.size() >= 2){
         shiftX = CalcMedian(shift_vecx);
         shiftY = CalcMedian(shift_vecy);
     }
     new_position = position_ + cv::Point(shiftX,shiftY);
+    new_position.width *= zoomX;
+    new_position.height *= zoomY;
+    if(new_position.width < 5){
+        new_position.width = 5;
+    }
+    if(new_position.height < 5){
+        new_position.height = 5;
+    }
     if(new_position.x < 0){
         new_position.x = 0;
     }
