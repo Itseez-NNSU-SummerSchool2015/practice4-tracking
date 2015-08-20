@@ -4,6 +4,61 @@
 
 #include <iostream>
 #include <fstream>
+#include "opencv2/opencv.hpp"
+
+class TrackerKoryukina : public Tracker
+{
+public:
+   virtual ~TrackerKoryukina() {}
+
+   virtual bool init( const cv::Mat& frame, const cv::Rect& initial_position );
+   virtual bool track( const cv::Mat& frame, cv::Rect& new_position );
+
+private:
+   cv::Rect position_;
+   cv::Mat prev_frame;
+};
+
+cv::Ptr<Tracker> createTrackerKoryukina()
+{
+   return cv::Ptr<Tracker>(new TrackerKoryukina());
+}
+
+bool TrackerKoryukina::init( const cv::Mat& frame, const cv::Rect& initial_position )
+{
+   position_ = initial_position;
+   prev_frame = frame.clone();
+   return true;
+}
+
+bool TrackerKoryukina::track( const cv::Mat& frame, cv::Rect& new_position )
+{
+    std::vector<cv::Point2f> corners, new_corners; 
+    cv::Mat frame_gray;
+    cv::Mat circles = frame.clone();
+    cv::Mat roi = prev_frame(position_).clone();
+    cv::cvtColor(roi,frame_gray,cv::COLOR_BGR2GRAY);
+    cv::goodFeaturesToTrack(frame_gray,corners, 100, 0.3, 7);
+    new_corners = corners;
+    for(int i=0; i<corners.size(); i++)
+    {
+        new_corners.at(i).x += position_.x;
+        new_corners.at(i).y +=position_.y;
+        cv::circle(circles,new_corners[i],4,cv::Scalar(255,0,0),-1);
+    }
+    
+    imshow("circles",circles);
+    std::vector<cv::Point2f> found;
+    std::vector<uchar> status;
+    std::vector<float> error;
+    calcOpticalFlowPyrLK(prev_frame, frame, corners, found, status, error);
+    prev_frame = frame.clone();
+
+    new_position = position_;
+
+    return true;
+}
+
 
 void help(const char *argv0)
 {
@@ -63,7 +118,6 @@ int main( int argc, const char** argv )
     // Get the first frame
     cv::Mat frame;
     cap >> frame;
-
     // Initialize GTReader and PrecisionRecallEvaluator
     std::string argv3 = parser.get<std::string>("3");
     GTReader gt_reader(argv3);
@@ -108,7 +162,6 @@ int main( int argc, const char** argv )
             // Make rect red, if the prediction is incorrect
             rect_color = cv::Scalar(0, 0, 255);
         }
-
         // Display frame with predicted and ground truth rectangles, if known
         if (!gui.displayImage(frame,
                               found ? position : cv::Rect(),
