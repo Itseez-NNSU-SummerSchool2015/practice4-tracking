@@ -17,6 +17,7 @@ void help(const char *argv0)
         "\nGround truth files are text files where each line is the representation\n"
         "of a bounding box in the described format. Examples can also be found \n"
         "in the\"dataset\" folder.\n\n"
+        " <tracker_algorithm> may be \"dummy\" or \"median_flow\" \n\n"
         "Examples:\n\n"
         "$ ./bin/tracking_sample dummy ../dataset/car.mp4\n\n"
         "$ ./bin/tracking_sample dummy ../dataset/car.mp4 142,125,232,164\n\n"
