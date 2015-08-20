@@ -22,7 +22,7 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 # BUILD
 add_subdirectory(samples)
 # Add you directory here
-# add_subdirectory(sample_YOUR_NAME)
+add_subdirectory(sample_Shchedrin)
 
 # REPORT
 message( STATUS "")
