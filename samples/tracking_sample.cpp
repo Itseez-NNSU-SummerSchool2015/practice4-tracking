@@ -21,6 +21,7 @@ void help(const char *argv0)
         "$ ./bin/tracking_sample dummy ../dataset/car.mp4\n\n"
         "$ ./bin/tracking_sample dummy ../dataset/car.mp4 142,125,232,164\n\n"
         "$ ./bin/tracking_sample dummy ../dataset/car.mp4 ../dataset/car.txt\n\n"
+        "$ ./bin/tracking_sample moskalenko ../dataset/car.mp4 ../dataset/car.txt\n\n"
               << std::endl;
 }
 
