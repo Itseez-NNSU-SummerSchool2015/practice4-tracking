@@ -1,5 +1,6 @@
 #include <tracker.hpp>
 #include <opencv2/video/tracking.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 
 class TrackerKustikova : public Tracker
