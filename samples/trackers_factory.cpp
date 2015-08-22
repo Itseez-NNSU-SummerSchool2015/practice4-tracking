@@ -9,8 +9,6 @@ cv::Ptr<Tracker> createTracker(const std::string &impl_name)
         return createTrackerDummy();
     if (impl_name == "kustikova")
          return createTrackerKustikova();
-    // else if (impl_name == "your_name"):
-    //     return createTrackerYourName();
 
     return 0;
 }
