@@ -22,6 +22,8 @@ class TrackerKustikova : public Tracker
     bool restoreBoundingBox(std::vector<cv::Point2f> &corners, 
         std::vector<cv::Point2f> &nextCorners, cv::Rect &new_position);
 
+    float median(std::vector<float> &v);
+
     bool computeMedianShift(std::vector<cv::Point2f> &corners, 
         std::vector<cv::Point2f> &nextCorners, float &dx, float &dy);
 
@@ -40,6 +42,12 @@ bool TrackerKustikova::init( const cv::Mat& frame, const cv::Rect& initial_posit
     position_ = initial_position;
     cv::cvtColor(frame, prevFrame_, CV_BGR2GRAY);
     return true;
+}
+
+float TrackerKustikova::median(std::vector<float> &v)
+{
+    std::sort(v.begin(), v.end());
+    return v[v.size() / 2];
 }
 
 bool TrackerKustikova::filterCorners(std::vector<cv::Point2f> &corners, 
@@ -62,8 +70,7 @@ bool TrackerKustikova::filterCorners(std::vector<cv::Point2f> &corners,
     }
     std::vector<float> errorsCopy(errors.size());
     std::copy(errors.begin(), errors.end(), errorsCopy.begin());
-    std::sort(errorsCopy.begin(), errorsCopy.end());
-    float medianError = errorsCopy[errorsCopy.size() / 2];
+    float medianError = median(errorsCopy);
 
     for (int i = errors.size() - 1; i >= 0; i--)
     {
@@ -92,10 +99,8 @@ bool TrackerKustikova::computeMedianShift(std::vector<cv::Point2f> &corners,
         shiftOx.push_back(nextCorners[i].x - corners[i].x);
         shiftOy.push_back(nextCorners[i].y - corners[i].y);
     }
-    std::sort(shiftOx.begin(), shiftOx.end());
-    std::sort(shiftOy.begin(), shiftOy.end());
-    dx = shiftOx[shiftOx.size() / 2];
-    dy = shiftOy[shiftOy.size() / 2];
+    dx = median(shiftOx);
+    dy = median(shiftOy);
     return true;
 }
 
@@ -135,8 +140,7 @@ bool TrackerKustikova::computeScaleFactor(std::vector<cv::Point2f> &corners,
     computePointDistances(corners, dist);
     computePointDistances(nextCorners, nextDist);
     computeDistScales(dist, nextDist, distScales);
-    std::sort(distScales.begin(), distScales.end());
-    scale = distScales[distScales.size() / 2];
+    scale = median(distScales);
     return true;
 }
 
