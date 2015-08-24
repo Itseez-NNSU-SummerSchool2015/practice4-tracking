@@ -39,21 +39,20 @@ bool TrackerKustikova::init( const cv::Mat& frame, const cv::Rect& initial_posit
 {
     position_ = initial_position;
     cv::cvtColor(frame, prevFrame_, CV_BGR2GRAY);
-	return true;
+    return true;
 }
 
 bool TrackerKustikova::filterCorners(std::vector<cv::Point2f> &corners, 
         std::vector<cv::Point2f> &nextCorners, std::vector<uchar> &status,
         std::vector<float> &errors)
 {
-    std::cout << corners.size() << " " << nextCorners.size() << " " <<
-        status.size() << " " << errors.size() << std::endl;
     for (int i = status.size() - 1; i >= 0; i--)
     {
         if (!status[i])
         {
             status.erase(status.begin() + i);
             corners.erase(corners.begin() + i);
+            nextCorners.erase(nextCorners.begin() + i);
             errors.erase(errors.begin() + i);
         }
     }
@@ -192,26 +191,26 @@ bool TrackerKustikova::track( const cv::Mat& frame, cv::Rect& new_position )
     std::vector<cv::Point2f> nextCorners;
     std::vector<uchar> status;
     std::vector<float> errors;
-    cv::Mat frame_;
-    cv::cvtColor(frame, frame_, CV_BGR2GRAY);
-    cv::calcOpticalFlowPyrLK(prevFrame_, frame_, 
+    cv::Mat frameGray;
+    cv::cvtColor(frame, frameGray, CV_BGR2GRAY);
+    cv::calcOpticalFlowPyrLK(prevFrame_, frameGray, 
         corners, nextCorners, status, errors);
 
     if (!filterCorners(corners, nextCorners, status, errors))
     {
-        std::cout << "There no feature points for tracking." << std::endl;
+        std::cout << "There are no feature points for tracking." << std::endl;
         return false;
     }
 
     if (!restoreBoundingBox(corners, nextCorners, new_position))
     {
-        std::cout << "There no enough number of feature points " <<
+        std::cout << "There are no enough number of feature points " <<
             "to restore bounding box." << std::endl;
         return false;
     }
 
     position_ = new_position;
-    prevFrame_ = frame_;
+    prevFrame_ = frameGray;
 	return true;
 }
 
